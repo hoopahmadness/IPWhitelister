@@ -66,11 +66,18 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		contains = contains || elem == country
 	}
 
+	out := map[string]string{
+		"ip":      ipReq.IP,
+		"Country": country,
+	}
+	outbytes, _ := json.Marshal(out)
+
 	//send back IP with good or bad status code
 	if contains {
-		fmt.Fprint(w, ipReq.IP) //200 means the country is whitelisted
+		fmt.Fprint(w, string(outbytes)) //200 means the country is whitelisted
 	} else {
-		http.Error(w, ipReq.IP, 204) //picked 204 because it's not a real error code, but can act as "false"
+		w.WriteHeader(422)
+		fmt.Fprint(w, string(outbytes))
 	}
 
 }
