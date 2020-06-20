@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	DBFILENAME  = "./DB/GeoLite2-Country_20200616/GeoLite2-Country.mmdb"
+	DBFILENAME  = "./DB/GeoLite2-Country_20200616/GeoLite2-Country.mmdb" //In the future, remove the data-specific directory and use a static or "latest" dir
 	TARFILENAME = "./DB/GeoIP2-Country.tar.gz"
 )
 
@@ -32,21 +32,33 @@ func main() {
 
 //set up handler
 func handler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "Expecting 'POST'", http.StatusMethodNotAllowed)
+		return
+	}
 
 	var contains bool
 	//parse out IP and whitelisted countries
 	bytes, err := ioutil.ReadAll(r.Body)
 	var ipReq IPCheckRequest
 	err = json.Unmarshal(bytes, &ipReq)
-	log.Print(err)
-	//get country for IP
-	country, err := lookupIP(ipReq.IP)
 	if err != nil {
-		//log error, return bad status
+		http.Error(w, err.Error(), 400)
+		log.Print(err)
+		return
+	}
+	err = ipReq.validate()
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+		log.Print(err)
+		return
+	}
+	//get country for IP
+	country, err := lookupIP(ipReq.IP, ipReq.Lang)
+	if err != nil {
 		http.Error(w, err.Error(), 500)
 		log.Print(err)
 		return
-
 	}
 
 	//compare to list

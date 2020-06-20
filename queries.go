@@ -14,7 +14,7 @@ import (
 	"net"
 )
 
-func lookupIP(ipStr string) (country string, err error) {
+func lookupIP(ipStr, lang string) (string, error) {
 	db, err := geoip2.Open(DBFILENAME)
 	if err != nil {
 		log.Fatal(err)
@@ -33,6 +33,10 @@ func lookupIP(ipStr string) (country string, err error) {
 		return "", err
 	}
 
-	return record.Country.Names["en"], nil
+	country := record.Country.Names[lang]
+	if country == "" {
+		country = record.Country.Names["en"]
+	}
+	return country, nil
 
 }
